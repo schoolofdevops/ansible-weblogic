@@ -1,0 +1,55 @@
+#
+# This file is managed by Ansible
+User={{ oracle.user }}
+Group={{ oracle.group }}
+Type=simple
+
+#!/bin/bash
+# Source function library.
+. /etc/init.d/functions
+
+RETVAL=0
+PIDFILE={{ weblogic_nodemanager_home }}/nodemanager.process.id
+
+prog=nodemanager
+
+start() {
+{{ weblogic_domain_home }}/bin/startNodeManager.sh > /dev/null 2>&1 &
+}
+stop() {
+{{ weblogic_domain_home }}/bin/stopNodeManager.sh > /dev/null 2>&1 &
+}
+restart() {
+        stop
+        start
+}
+
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  restart)
+        restart
+        ;;
+  reload)
+        exit 3
+        ;;
+  force-reload)
+        restart
+        ;;
+  status)
+        restart
+        ;;
+  condrestart|try-restart)
+        rhstatus >/dev/null 2>&1 || exit 0
+        restart
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|restart|condrestart|try-restart|reload|force-reload|status}"
+        exit 3
+esac
+
+exit $?

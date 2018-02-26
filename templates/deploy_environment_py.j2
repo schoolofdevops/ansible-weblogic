@@ -1,0 +1,54 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+import os.path
+
+print 'DEFINE VARIABLES FOR APPLICATION DEPLOYMENT'
+what_to_do = '{{ deploy_action }}'
+artifact_path = '{{ artifact_path }}'
+application_name= '{{ application_name }}'
+#private_ip= "{{ weblogic.private_ip }}"
+print 'CREATE VARIABLES'
+domain_application_home = '{{ oracle.middleware_dir }}/user_projects/applications/{{ weblogic_domain_name }}'
+domain_configuration_home = '{{ oracle.middleware_dir }}/user_projects/domains/{{ weblogic_domain_name }}'
+domain_name = '{{ weblogic_domain_name }}'
+fusion_middleware_home = '{{ oracle.middleware_dir }}'
+java_home = '/opt/java/jdk1.8.0_162'
+middleware_home = '{{ oracle.middleware_dir }}'
+node_manager_home = '{{ oracle.middleware_dir }}/user_projects/nodemanagers/{{ weblogic_domain_name }}'
+weblogic_home = '{{ weblogic.home_dir }}'
+admin_server_url = 't3://' + 'localhost' + ':' + '{{ weblogic.adminserver_listen_port }}';
+
+def connect_to_admin_server():
+    print 'CONNECT TO ADMIN SERVER'
+    connect('{{ weblogic_admin_user }}', '{{ weblogic_admin_password }}', admin_server_url);
+
+def deploy_applications():
+    undeploy_applications();
+    deploy(application_name,artifact_path,upload='true')
+
+def undeploy_applications():
+        print 'UNDEPLOYING APPLICATION ' + application_name
+        undeploy(appName=application_name)
+
+def start_edit_mode():
+    print 'START EDIT MODE'
+    edit()
+    startEdit()
+
+def save_and_active_changes():
+    print 'SAVE AND ACTIVATE CHANGES'
+    save()
+    activate(block='true')
+
+connect_to_admin_server()
+
+start_edit_mode()
+
+if what_to_do == 'deploy':
+    deploy_applications()
+elif what_to_do == 'undeploy':
+    undeploy_applications()
+else:
+    print 'NOTHING TO DO'
+
+save_and_active_changes()

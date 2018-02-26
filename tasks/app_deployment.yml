@@ -1,0 +1,19 @@
+---
+- name: create deploy_environment.py
+  template:
+    src: deploy_environment_py.j2 
+    dest: "{{ weblogic.scripts_dir }}/deploy_environment.py"
+    owner: "{{ oracle.user }}"
+    group: "{{ oracle.group }}"
+    mode: 0750
+ 
+- name: copy deployment artifacts
+  copy:
+    src: app/sample.war
+    dest: "{{ weblogic_domain_home }}/deploy/"
+    owner: "{{ oracle.user }}"
+    group: "{{ oracle.group }}"
+    mode: 0750
+
+- name: Deploy Application
+  shell: "nohup {{ oracle.middleware_dir }}/oracle_common/common/bin/wlst.sh {{ weblogic.scripts_dir }}/deploy_environment.py > {{ weblogic.logs_dir }}/deploy_environment_base_domain_$(date +'%F').log 2>&1 &"

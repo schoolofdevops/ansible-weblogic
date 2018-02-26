@@ -1,0 +1,102 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import os.path
+
+print 'DEFINE VARIABLES FOR APPLICATION DEPLOYMENT'
+what_to_do = '{{ deploy_action }}'
+target_names = '{{ deploy_targets }}'
+
+print 'CREATE VARIABLES'
+#domain_application_home = '{{ domain_application_home }}'
+domain_application_home = '{{ oracle.middleware_dir }}/user_projects/applications/{{ weblogic_domain_name }}'
+#domain_configuration_home = '{{ domain_configuration_home }}'
+domain_configuration_home = '{{ oracle.middleware_dir }}/user_projects/domains/{{ weblogic_domain_name }}'
+domain_name = '{{ weblogic_domain_name }}'
+fusion_middleware_home = '{{ oracle.middleware_dir }}'
+java_home = '/opt/java/jdk1.8.0_162'
+#middleware_home = '{{ middleware_home }}'
+middleware_home = '{{ oracle.middleware_dir }}'
+#node_manager_home = '{{ node_manager_home }}'
+node_manager_home = '{{ oracle.middleware_dir }}/user_projects/nodemanagers/{{ weblogic_domain_name }}'
+#weblogic_home = '{{ weblogic_home }}'
+weblogic_home = '{{ weblogic.home_dir }}'
+admin_server_url = 't3://' + 'localhost' + ':' + '{{ weblogic.adminserver_listen_port }}';
+
+def connect_to_admin_server():
+    print 'CONNECT TO ADMIN SERVER'
+    connect('{{ weblogic_admin_user }}', '{{ weblogic_admin_password }}', admin_server_url);
+
+def determine_application_names():
+    application_names = []
+
+    deployed_application_names = []
+    app_deployments = cmo.getAppDeployments()
+    for app_deployment in app_deployments:
+        deployed_application_names.append(app_deployment.getName())
+
+    if what_to_do == 'undeploy':
+        return deployed_application_names
+
+    directory_entry_names = os.listdir(domain_application_home)
+    for directory_entry_name in directory_entry_names:
+        if not os.path.isfile(os.path.join(domain_application_home,
+                              directory_entry_name)):
+            if directory_entry_name not in deployed_application_names:
+                application_names.append(directory_entry_name)
+
+    return application_names
+
+
+def deploy_applications(application_names):
+    for application_name in application_names:
+        application_path = os.path.join(domain_application_home,
+                                        application_name)
+        deployment_plan = application_path + '/plan/Plan.xml'
+        deployment_artifact_path = application_path + '/app'
+        deployment_artifact = deployment_artifact_path + '/' \
+            + os.listdir(deployment_artifact_path)[0]
+        if os.path.isfile(deployment_plan):
+            print 'DEPLOYING APPLICATION ' + application_name \
+                + ' WITH DEPLOYMENT PLAN'
+            deploy(appName=application_name, path=deployment_artifact,
+                   targets=target_names, planPath=deployment_plan)
+        else:
+            print 'DEPLOYING APPLICATION ' + application_name \
+                + ' WITHOUT DEPLOYMENT PLAN'
+            deploy(appName=application_name, path=deployment_artifact,
+                   targets=target_names)
+
+
+def undeploy_applications(application_names):
+    for application_name in application_names:
+        print 'UNDEPLOYING APPLICATION ' + application_name
+        undeploy(appName=application_name)
+
+
+def start_edit_mode():
+    print 'START EDIT MODE'
+    edit()
+    startEdit()
+
+
+def save_and_active_changes():
+    print 'SAVE AND ACTIVATE CHANGES'
+    save()
+    activate(block='true')
+
+
+connect_to_admin_server()
+
+start_edit_mode()
+
+application_names = determine_application_names()
+
+if what_to_do == 'deploy' and application_names:
+    deploy_applications(application_names)
+elif what_to_do == 'undeploy' and application_names:
+    undeploy_applications(application_names)
+else:
+    print 'NOTHING TO DO'
+
+save_and_active_changes()
