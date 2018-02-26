@@ -19,6 +19,7 @@
 - name: RedHat | Disable firewall deamon (firewalld)
   service: name=firewalld state=stopped enabled=no
   when: (ansible_os_family == 'RedHat') and (ansible_virtualization_type != 'docker')
+  ignore_errors: yes
 
 #- name: Change kernel parameters
 #  sysctl:
