@@ -1,0 +1,41 @@
+---
+
+- include: validate.yml
+
+- include: prepare.yml
+  become: yes
+  when: weblogic_force_installation or (not weblogic_already_installed)
+
+- include: swap_setup.yml
+  become: yes
+  when: (ansible_swaptotal_mb == 0)
+
+- include: install.yml
+  become: yes
+  become_user: "{{ oracle.user }}"
+  when: weblogic_force_installation or (not weblogic_already_installed)
+  tags:
+    - wls-plain-install
+    - wls-install-with-domain
+    - wls-install-with-managed-server
+
+- include: create-domain.yml
+  become: yes
+  become_user: "{{ oracle.user }}"
+  when: not weblogic_domain_already_installed
+  tags:
+    - wls-install-with-domain
+    - wls-install-with-managed-server
+
+#- include: create-managed-server.yml
+#  become: yes
+#  become_user: "{{ oracle.user }}"
+#  when: not weblogic_managed_server_already_installed
+#  tags:
+#    - wls-install-with-managed-server
+
+- include: app_deployment.yml
+  become: yes
+  become_user: "{{ oracle.user }}"
+  tags:
+    - wls-deploy-application

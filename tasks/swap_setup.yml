@@ -1,0 +1,27 @@
+---
+- name: Create swap file
+  command: dd if=/dev/zero of=/swapfile bs=1224 count=512k
+  tags:
+    - swap.file.create
+
+
+- name: Change swap file permissions
+  file:
+    path: /swapfile
+    owner: root
+    group: root
+    mode: 0600
+  tags:
+    - swap.file.permissions
+
+- name: Make swap file
+  command: "sudo mkswap /swapfile"
+  tags:
+    - swap.file.mkswap
+
+
+- name: Mount swap
+  command: "swapon /swapfile"
+  when: ansible_swaptotal_mb < 1
+  tags:
+    - swap.file.swapon
